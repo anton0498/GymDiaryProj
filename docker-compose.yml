@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: gymdiary_db
+    environment:
+      POSTGRES_DB: gymdiary
+      POSTGRES_USER: gymdiary
+      POSTGRES_PASSWORD: gymdiary
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gymdiary -d gymdiary"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: gymdiary_backend
+    environment:
+      DJANGO_DEBUG: "1"
+      DJANGO_SECRET_KEY: "dev-secret-key"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: gymdiary
+      DB_USER: gymdiary
+      DB_PASSWORD: gymdiary
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
